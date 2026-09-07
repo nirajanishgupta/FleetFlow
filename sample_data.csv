@@ -1,0 +1,11 @@
+Buyer_Outlet_ID,Buyer_Outlet_Name,Lat,Lon,Demand_Crates
+S001,Store Delhi North,28.7041,77.1025,45
+S002,Store Delhi East,28.6139,77.209,38
+S003,Store Gurgaon Central,28.4595,77.0266,52
+S004,Store Noida Sector 18,28.5685,77.3249,41
+S005,Store Faridabad Market,28.4089,77.3178,35
+S006,Store Delhi South,28.5244,77.1855,48
+S007,Store Ghaziabad Mall,28.6692,77.4538,29
+S008,Store Greater Noida,28.4744,77.504,44
+S009,Store Delhi West,28.6692,77.1,33
+S010,Store Sonipat Store,28.9931,77.0151,37

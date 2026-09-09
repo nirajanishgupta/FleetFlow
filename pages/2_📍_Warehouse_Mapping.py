@@ -461,9 +461,10 @@ with col_right:
     # Create and display map
     m = create_map(st.session_state.warehouses, st.session_state.stores)
     # map_data = st_folium(m, width=None, height=500, key="main_map")
-    from streamlit_folium import folium_static
-      folium_static(m, width=None, height=500)
-      map_data = None
+   # Create and display map
+
+        folium_static(m, width=None, height=500)
+        map_data = None
 
     # Handle map clicks - toggle selection (only process NEW clicks)
     if map_data and map_data.get('last_object_clicked'):

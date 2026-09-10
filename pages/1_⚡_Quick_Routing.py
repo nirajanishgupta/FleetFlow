@@ -764,12 +764,38 @@ if uploaded and run:
     with st.spinner("Running Clarke-Wright algorithm..."):
         df = pd.read_csv(uploaded)
 
-        # Validate CSV schema
-        required_cols = ['Buyer_Outlet_ID', 'Buyer_Outlet_Name', 'Latitude', 'Longitude', 'Demand_Crates']
-        missing_cols = set(required_cols) - set(df.columns)
-        if missing_cols:
-            st.error(f"❌ Missing required columns: {missing_cols}")
-            st.stop()
+        # Normalize column names (case-insensitive)
+        df.columns = df.columns.str.strip().str.lower()
+
+        # Flexible column matching (ponytail: same as Warehouse Mapping page)
+        col_map = {}
+        required = {
+            'id': ['buyer_outlet_id', 'outlet_id', 'id', 'store_id'],
+            'name': ['buyer_outlet_name', 'outlet_name', 'name', 'store_name'],
+            'lat': ['outlet_latitude', 'latitude', 'lat'],
+            'lon': ['outlet_longitude', 'longitude', 'lon', 'lng'],
+            'crates': ['demand_crates', 'demand', 'crates']
+        }
+
+        for field, candidates in required.items():
+            found = None
+            for candidate in candidates:
+                if candidate in df.columns:
+                    found = candidate
+                    break
+            if not found:
+                st.error(f"❌ Missing required column for {field}. Tried: {', '.join(candidates)}")
+                st.stop()
+            col_map[field] = found
+
+        # Rename to standard names for rest of code
+        df = df.rename(columns={
+            col_map['id']: 'Buyer_Outlet_ID',
+            col_map['name']: 'Buyer_Outlet_Name',
+            col_map['lat']: 'Latitude',
+            col_map['lon']: 'Longitude',
+            col_map['crates']: 'Demand_Crates'
+        })
 
         # Clean and parse stores
         original_count = len(df)

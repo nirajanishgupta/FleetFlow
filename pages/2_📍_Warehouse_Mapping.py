@@ -384,10 +384,11 @@ with col_right:
 
     if not st.session_state.warehouses and not st.session_state.stores:
         st.info("👈 Upload stores and add warehouses to see the map")
-
-    # Create and display map
-    m = create_map(st.session_state.warehouses, st.session_state.stores)
-    map_data = st_folium(m, width=None, height=500, key="main_map")
+        map_data = None
+    else:
+        # Create and display map
+        m = create_map(st.session_state.warehouses, st.session_state.stores)
+        map_data = st_folium(m, width=None, height=500, key="main_map")
    # Create and display map
     
     # Handle map clicks - toggle selection (only process NEW clicks)

@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 import folium
-import streamlit.components.v1 as components
+from streamlit_folium import st_folium
 import sys
 from pathlib import Path
 
@@ -385,10 +385,32 @@ with col_right:
     if not st.session_state.warehouses and not st.session_state.stores:
         st.info("👈 Upload stores and add warehouses to see markers")
 
-    # ponytail: bypass st_folium serialization, use raw HTML (loses click handling)
+    # Restored st_folium with older version (0.17.0) that works
     m = create_map(st.session_state.warehouses, st.session_state.stores)
-    map_html = m._repr_html_()
-    components.html(map_html, width=None, height=600, scrolling=True)
+    map_data = st_folium(m, width=None, height=600, key="main_map")
+
+    # Handle map clicks - toggle selection
+    if map_data and map_data.get('last_object_clicked'):
+        clicked_lat = map_data['last_object_clicked']['lat']
+        clicked_lng = map_data['last_object_clicked']['lng']
+        click_signature = f"{clicked_lat:.6f},{clicked_lng:.6f}"
+
+        if click_signature != st.session_state.last_map_click:
+            st.session_state.last_map_click = click_signature
+
+            # Find clicked store
+            clicked_store = None
+            for s in st.session_state.stores:
+                if abs(s['lat'] - clicked_lat) < 0.0001 and abs(s['lon'] - clicked_lng) < 0.0001:
+                    clicked_store = s
+                    break
+
+            if clicked_store:
+                if clicked_store['id'] in st.session_state.selected_store_ids:
+                    st.session_state.selected_store_ids.remove(clicked_store['id'])
+                else:
+                    st.session_state.selected_store_ids.add(clicked_store['id'])
+                st.rerun()
 
     # Legend
     if st.session_state.warehouses:

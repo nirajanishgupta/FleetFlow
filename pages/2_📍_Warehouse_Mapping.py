@@ -236,11 +236,6 @@ def create_map(warehouses, stores):
         folium.Marker(
             location=[wh['lat'], wh['lon']],
             popup=popup_html,
-            icon=folium.Icon(
-                color='red' if is_selected else 'lightred',
-                icon='home',
-                prefix='fa'
-            ),
             tooltip=wh['name']
         ).add_to(m)
 

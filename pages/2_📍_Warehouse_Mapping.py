@@ -190,6 +190,12 @@ def restore_stores(store_ids):
 
 def create_map(warehouses, stores):
     """Create Folium map with warehouses and stores"""
+    # ponytail: minimal map for debugging serialization, restore full version after testing
+    m = folium.Map(location=[28.6, 77.2], zoom_start=5)
+    return m
+
+    # DISABLED FOR TESTING - restore after confirming st_folium works
+    '''
     if not warehouses and not stores:
         m = folium.Map(location=[28.6, 77.2], zoom_start=5)
         return m
@@ -315,6 +321,7 @@ def create_map(warehouses, stores):
         marker.add_to(m)
 
     return m
+    '''
 
 
 # ==============================================================================

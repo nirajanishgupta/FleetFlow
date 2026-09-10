@@ -191,6 +191,14 @@ def clarke_wright(stores, plant, vehicles, max_stops, max_util, max_km, base_tim
         routes.remove(rj)
         routes.append(merged)
 
+    # ponytail: filter routes that violate max_km (catches single-store routes too far from plant)
+    valid_routes = []
+    for route in routes:
+        points = [(plant['lat'], plant['lon'])] + [(stores[k]['lat'], stores[k]['lon']) for k in route]
+        if route_distance(points + [points[0]]) <= max_km:
+            valid_routes.append(route)
+    routes = valid_routes
+
     # === Cost-Minimized Vehicle Assignment ===
     target_util = max_util - TARGET_UTIL_BUFFER
     min_util = target_util - MIN_UTIL_BUFFER
@@ -276,6 +284,12 @@ def clarke_wright(stores, plant, vehicles, max_stops, max_util, max_km, base_tim
                              key=lambda s: haversine((plant['lat'], plant['lon']),
                                                     (stores[s]['lat'], stores[s]['lon'])))
             test_route = [start_store]
+
+            # ponytail: skip if single store already > max_km
+            points = [(plant['lat'], plant['lon']), (stores[start_store]['lat'], stores[start_store]['lon'])]
+            if route_distance(points + [points[0]]) > max_km:
+                continue
+
             test_remaining = [s for s in remaining if s != start_store]
 
             # Pack to target

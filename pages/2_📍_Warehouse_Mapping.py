@@ -384,6 +384,8 @@ with col_right:
 
     if not st.session_state.warehouses and not st.session_state.stores:
         st.info("👈 Upload stores and add warehouses to see markers")
+    else:
+        st.caption("💡 Tip: Use table checkboxes below for easier store selection")
 
     # Restored st_folium with older version (0.17.0) that works
     m = create_map(st.session_state.warehouses, st.session_state.stores)
@@ -398,10 +400,10 @@ with col_right:
         if click_signature != st.session_state.last_map_click:
             st.session_state.last_map_click = click_signature
 
-            # Find clicked store
+            # Find clicked store (increased tolerance for easier clicking)
             clicked_store = None
             for s in st.session_state.stores:
-                if abs(s['lat'] - clicked_lat) < 0.0001 and abs(s['lon'] - clicked_lng) < 0.0001:
+                if abs(s['lat'] - clicked_lat) < 0.001 and abs(s['lon'] - clicked_lng) < 0.001:
                     clicked_store = s
                     break
 

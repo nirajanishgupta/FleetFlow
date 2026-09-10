@@ -388,7 +388,7 @@ with col_right:
     # ponytail: bypass st_folium serialization, use raw HTML (loses click handling)
     m = create_map(st.session_state.warehouses, st.session_state.stores)
     map_html = m._repr_html_()
-    components.html(map_html, height=600)
+    components.html(map_html, width=None, height=600, scrolling=True)
 
     # Legend
     if st.session_state.warehouses:

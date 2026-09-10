@@ -312,10 +312,11 @@ def create_map(warehouses, stores):
             weight=3 if is_selected else 1,
             fillColor=color,
             fillOpacity=fillOpacity,
-            tooltip=folium.Tooltip(tooltip_html, sticky=True)
+            tooltip=tooltip_html  # Pass HTML string directly, not Tooltip object
+
         )
         # Add custom property for click detection
-        marker.add_child(folium.Popup(f"<div id='store-{store['id']}'></div>"))
+        # marker.add_child(folium.Popup(f"<div id='store-{store['id']}'></div>"))
         marker.add_to(m)
 
     return m

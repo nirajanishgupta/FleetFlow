@@ -190,12 +190,6 @@ def restore_stores(store_ids):
 
 def create_map(warehouses, stores):
     """Create Folium map with warehouses and stores"""
-    # ponytail: minimal map for debugging serialization, restore full version after testing
-    m = folium.Map(location=[28.6, 77.2], zoom_start=5)
-    return m
-
-    # DISABLED FOR TESTING - restore after confirming st_folium works
-    '''
     if not warehouses and not stores:
         m = folium.Map(location=[28.6, 77.2], zoom_start=5)
         return m
@@ -212,116 +206,46 @@ def create_map(warehouses, stores):
 
     m = folium.Map(location=[center_lat, center_lon], zoom_start=8)
 
-    # Add warehouse markers and circles
+    # ponytail: simplified markers, no popups - add back if these work
+    # Add warehouse circles
     for wh in warehouses:
-        is_selected = (wh['id'] == st.session_state.selected_warehouse_id)
-
-        # Circle for radius
         folium.Circle(
             location=[wh['lat'], wh['lon']],
-            radius=wh['radius'] * 1000,  # km to meters
+            radius=wh['radius'] * 1000,
             color=wh['color'],
             fill=True,
             fillColor=wh['color'],
-            fillOpacity=0.15 if is_selected else 0.08,
-            weight=3 if is_selected else 2,
-            opacity=0.8 if is_selected else 0.5
+            fillOpacity=0.1,
+            weight=2
         ).add_to(m)
-
-        # Marker for warehouse
-        stats = get_warehouse_stats(wh['id'], stores)
-        popup_html = f"""
-        <div style="min-width:200px; font-family:sans-serif;">
-            <div style="font-weight:700; font-size:14px; margin-bottom:8px;">{wh['name']}</div>
-            <div style="font-size:12px; margin-bottom:4px;">Radius: <b>{wh['radius']} km</b></div>
-            <div style="font-size:12px; margin-bottom:4px;">Stores: <b>{stats['total_stores']}</b></div>
-            <div style="font-size:12px;">Crates: <b>{stats['total_crates']}</b></div>
-        </div>
-        """
 
         folium.Marker(
             location=[wh['lat'], wh['lon']],
-            popup=popup_html,
-            tooltip=wh['name']
+            tooltip=wh['name']  # Simple string tooltip only
         ).add_to(m)
 
     # Add store markers
     for store in stores:
         if store.get('removed'):
-            # Show infeasible stores in red
-            color = INFEASIBLE_COLOR
-            fillOpacity = 0.4
-            status = 'Infeasible (Removed)'
-        elif store.get('assigned_warehouse'):
+            continue  # Skip removed stores for now
+
+        if store.get('assigned_warehouse'):
             wh = next((w for w in warehouses if w['id'] == store['assigned_warehouse']), None)
             color = wh['color'] if wh else INFEASIBLE_COLOR
-            fillOpacity = 0.8
-            status = 'Assigned'
         else:
             color = INFEASIBLE_COLOR
-            fillOpacity = 0.6
-            status = 'Unassigned'
 
-        # Check if this store is in the selected set
-        is_selected = store['id'] in st.session_state.selected_store_ids
-
-        # Show distances to all warehouses in popup
-        distances_html = ""
-        if warehouses:
-            distances_html = "<div style='margin-top:8px; padding-top:8px; border-top:1px solid #e5e7eb;'><div style='font-size:11px; font-weight:700; color:#6b7280; margin-bottom:4px;'>DISTANCES</div>"
-            for wh in warehouses:
-                dist = haversine_distance(store['lat'], store['lon'], wh['lat'], wh['lon'])
-                within = "✓" if dist <= wh['radius'] else "✗"
-                distances_html += f"<div style='font-size:11px; margin-bottom:2px;'><span style='color:{wh['color']}'>●</span> {wh['name']}: <b>{dist:.1f} km</b> {within}</div>"
-            distances_html += "</div>"
-
-        # Build popup
-        popup_content = f"""
-        <div style="min-width:220px; font-family:sans-serif;">
-            <div style="font-weight:700; font-size:13px; margin-bottom:2px;">{store['name']}</div>
-            <div style="font-size:11px; color:#6b7280; margin-bottom:8px;">ID: {store['id']}</div>
-            <div style="font-size:12px; margin-bottom:4px;">Crates: <b>{store.get('crates', 0)}</b></div>
-            <div style="font-size:12px; margin-bottom:4px;">Status: <b>{status}</b></div>
-            <div style="font-size:12px; margin-bottom:4px;">Warehouse: <b>{store.get('assigned_warehouse_name', 'Unassigned')}</b></div>
-            <div style="font-size:12px;">Distance: <b>{store.get('distance_to_warehouse', 'N/A')} km</b></div>
-            {distances_html}
-            <div style="margin-top:8px; padding-top:8px; border-top:1px solid #e5e7eb; font-size:11px; color:#6b7280;">
-                Click store in table below to reassign or mark infeasible
-            </div>
-        </div>
-        """
-
-        # Rich tooltip with details
-        tooltip_html = f"""
-        <div style="font-family:sans-serif; min-width:200px;">
-            <div style="font-weight:700; font-size:13px; margin-bottom:4px;">{store['name']}</div>
-            <div style="font-size:11px; color:#6b7280; margin-bottom:6px;">ID: {store['id']}</div>
-            <div style="font-size:12px; margin-bottom:2px;">Crates: <b>{store.get('crates', 0)}</b></div>
-            <div style="font-size:12px; margin-bottom:2px;">Warehouse: <b>{store.get('assigned_warehouse_name', 'Unassigned')}</b></div>
-            <div style="font-size:12px; margin-bottom:2px;">Distance: <b>{store.get('distance_to_warehouse', 'N/A')} km</b></div>
-            <div style="font-size:12px; margin-bottom:2px;">Status: <b>{status}</b></div>
-            <div style="font-size:10px; color:#6b7280; margin-top:4px; font-style:italic;">Click to select/deselect</div>
-        </div>
-        """
-
-        # Add marker with store ID for click detection
-        marker = folium.CircleMarker(
+        folium.CircleMarker(
             location=[store['lat'], store['lon']],
-            radius=7 if is_selected else 5,
-            popup=popup_content,
-            color='#2563eb' if is_selected else 'white',
-            weight=3 if is_selected else 1,
+            radius=5,
             fillColor=color,
-            fillOpacity=fillOpacity,
-            tooltip=tooltip_html  # Pass HTML string directly, not Tooltip object
-
-        )
-        # Add custom property for click detection
-        # marker.add_child(folium.Popup(f"<div id='store-{store['id']}'></div>"))
-        marker.add_to(m)
+            fillOpacity=0.7,
+            color='white',
+            weight=1,
+            tooltip=store['name']  # Simple string tooltip only
+        ).add_to(m)
 
     return m
-    '''
 
 
 # ==============================================================================

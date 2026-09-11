@@ -229,6 +229,9 @@ def create_map(warehouses, stores):
         if store.get('removed'):
             continue  # Skip removed stores for now
 
+        # Check if selected (ponytail: visual feedback for selection)
+        is_selected = store['id'] in st.session_state.selected_store_ids
+
         if store.get('assigned_warehouse'):
             wh = next((w for w in warehouses if w['id'] == store['assigned_warehouse']), None)
             color = wh['color'] if wh else INFEASIBLE_COLOR
@@ -237,12 +240,12 @@ def create_map(warehouses, stores):
 
         folium.CircleMarker(
             location=[store['lat'], store['lon']],
-            radius=5,
-            fillColor=color,
-            fillOpacity=0.7,
-            color='white',
-            weight=1,
-            tooltip=store['name']  # Simple string tooltip only
+            radius=8 if is_selected else 5,  # Bigger when selected
+            fillColor='#FFD700' if is_selected else color,  # Gold when selected
+            fillOpacity=1.0 if is_selected else 0.7,
+            color='#000000' if is_selected else 'white',  # Black border when selected
+            weight=3 if is_selected else 1,
+            tooltip=f"{'✓ ' if is_selected else ''}{store['name']}"  # Checkmark in tooltip
         ).add_to(m)
 
     return m

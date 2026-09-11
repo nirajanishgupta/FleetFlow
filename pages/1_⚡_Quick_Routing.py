@@ -109,7 +109,7 @@ def pack_route_to_target(initial_route, vehicle, remaining_stores, stores, plant
 
 # === Clarke-Wright Algorithm ===
 
-def clarke_wright(stores, plant, vehicles, max_stops, max_util, max_km, base_time,
+def clarke_wright(stores, plant, vehicles, max_stops, max_util, min_util, max_km, base_time,
                   docks, load_time, unload_time, speed, use_osrm, delivery_model):
 
     # === Input Validation ===
@@ -201,7 +201,7 @@ def clarke_wright(stores, plant, vehicles, max_stops, max_util, max_km, base_tim
 
     # === Cost-Minimized Vehicle Assignment ===
     target_util = max_util - TARGET_UTIL_BUFFER
-    min_util = target_util - MIN_UTIL_BUFFER
+    # min_util now passed as parameter from user input
 
     # Sort routes by load (largest first) - assign big routes first
     route_loads = [(r, sum(stores[k]['crates'] for k in r)) for r in routes]
@@ -241,6 +241,10 @@ def clarke_wright(stores, plant, vehicles, max_stops, max_util, max_km, base_tim
                 route, vehicle, test_remaining, stores, plant,
                 target_util, max_util, max_stops, max_km
             )
+
+            # ponytail: final validation - ensure doesn't exceed max_util
+            if final_crates > vehicle['cap'] * max_util:
+                continue
 
             # Check if meets minimum utilization
             if final_crates < vehicle['cap'] * min_util:
@@ -297,6 +301,10 @@ def clarke_wright(stores, plant, vehicles, max_stops, max_util, max_km, base_tim
                 test_route, vehicle, test_remaining, stores, plant,
                 target_util, max_util, max_stops, max_km
             )
+
+            # ponytail: final validation - ensure doesn't exceed max_util
+            if final_crates > vehicle['cap'] * max_util:
+                continue
 
             # Check if meets minimum utilization
             if final_crates < vehicle['cap'] * min_util:
@@ -740,7 +748,16 @@ with st.sidebar:
             vehicles[vtype] = {'capacity': vcap, 'cost': vcost, 'count': vcount}
 
     st.subheader("Routing Constraints")
-    max_util = st.slider("Max Utilization %", 50, 100, 90) / 100
+    col1, col2 = st.columns(2)
+    with col1:
+        max_util = st.slider("Max Utilization %", 50, 100, 90) / 100
+    with col2:
+        min_util = st.slider("Min Utilization %", 50, 100, 70) / 100
+
+    if min_util > max_util:
+        st.error("⚠️ Min utilization cannot be greater than max utilization")
+        min_util = max_util - 0.05
+
     max_stops = st.number_input("Max Stops per Route", value=6, min_value=1, max_value=20)
     max_km = st.number_input("Max Round Trip Distance (km)", value=150, min_value=1)
 
@@ -859,7 +876,7 @@ if uploaded and run:
 
         try:
             routes, unassigned, distance_methods = clarke_wright(
-                stores, plant, vehicles, max_stops, max_util, max_km,
+                stores, plant, vehicles, max_stops, max_util, min_util, max_km,
                 start_time.strftime("%H:%M"), docks, load_time, unload_time, speed, use_osrm, delivery_model
             )
         except ValueError as e:

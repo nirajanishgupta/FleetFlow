@@ -750,13 +750,16 @@ with st.sidebar:
     st.subheader("Routing Constraints")
     col1, col2 = st.columns(2)
     with col1:
-        max_util = st.slider("Max Utilization %", 50, 100, 90) / 100
+        max_util = st.slider("Max Utilization %", 0, 100, 90) / 100
     with col2:
-        min_util = st.slider("Min Utilization %", 50, 100, 70) / 100
+        min_util = st.slider("Min Utilization %", 0, 100, 70) / 100
 
     if min_util > max_util:
         st.error("⚠️ Min utilization cannot be greater than max utilization")
         min_util = max_util - 0.05
+    if max_util == 0:
+        st.error("⚠️ Max utilization must be greater than 0")
+        max_util = 0.5
 
     max_stops = st.number_input("Max Stops per Route", value=6, min_value=1, max_value=20)
     max_km = st.number_input("Max Round Trip Distance (km)", value=150, min_value=1)
